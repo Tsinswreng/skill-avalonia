@@ -8,14 +8,13 @@ using Avalonia.Layout;
 using Avalonia.Markup.Declarative;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using MyProj.Infra;
 using MyProj.Services;
-using Tsinswreng.Avln.Dsl;
-using Tsinswreng.Avln.Grid;
 
 // 本檔只放函數實現。聲明與 [Doc] 註釋位於 ViewSample.cs。
 // 一屏一組 Impl：View 與它的巢狀 Vm 的實現都在本檔，不另外開 ViewSample.Vm.Impl.cs。
-// 加子項與設置內容用 Dsl 的 .A()、SetContent()、SetChild()，佈局用 GridStack；
-// 屬性、綁定、事件與樣式用 Declarative 的擴展方法。同一件事只挑一邊寫。
+// 控件樹與版面都用 Declarative 的擴展方法：.Rows()、.Cols()、.Children()、.With()。
+// 佈局容器用 AutoGrid，子項一加進去就自動落號，故不必自己算 Grid_Row、Grid_Column。
 public partial class ViewSample{
 
 	// View 只能有無參構造器。這裡解析 Vm 並交給基類的 vm，也就是設置 DataContext；
@@ -37,31 +36,27 @@ public partial class ViewSample{
 		];
 	}
 
-	// 控件樹由回傳值描述。佈局用成員 Root：每次 Add 時 GridStack 自動把行號或列號設成遞增的序號，
-	// 故不必自己算 Grid_Row、Grid_Column。Dsl 那套的 .A() 在 Declarative 裡沒有，用 Add。
+	// 控件樹由回傳值描述。佈局用成員 Root：它是 AutoGrid，子項一加進去就依順序自動落號，
+	// 故不必自己算 Grid_Row、Grid_Column。
 	// 代碼塊的嵌套層級要和實際控件樹結構保持一致：根節點縮進最少、越深的子控件縮進越多。
 	// Vm 由泛型基類傳入，型別已確定，故不判空。
 	protected override partial object Build(Vm vm){
 		// 四列單欄：工具列 / 清單 / 輸入列 / 狀態列。
-		Root.SetRowDefs([
-			new(1, GridUnitType.Auto),
-			new(1, GridUnitType.Star),
-			new(1, GridUnitType.Auto),
-			new(1, GridUnitType.Auto),
-		]);
+		Root.Rows("Auto,*,Auto,Auto");
 
-		Root.Add(MkToolbar(vm));
-		Root.Add(MkList(vm));
-		Root.Add(MkInputRow(vm));
-		Root.Add(new TextBlock()
-			.Text(vm, x=>x.StatusText)
-			.Margin(new Thickness(12, 0, 12, 10))
-			.With(t => {
-				_StatusText = t;
-			})
+		Root.Children(
+			MkToolbar(vm),
+			MkList(vm),
+			MkInputRow(vm),
+			new TextBlock()
+				.Text(vm, x=>x.StatusText)
+				.Margin(new Thickness(12, 0, 12, 10))
+				.With(t => {
+					_StatusText = t;
+				})
 		);
 
-		return Root.Grid;
+		return Root;
 	}
 
 	// 生命週期回調：控件樹與樣式都建好之後由庫觸發，耗時初始化放這裡。
@@ -114,42 +109,36 @@ public partial class ViewSample{
 
 	// 輸入列：輸入框與加入按鈕。不需要指定 BindingMode 的綁定就不要寫。
 	public partial Control MkInputRow(Vm vm){
-		var R = new GridStack(IsRow: false);
-		R.SetColDefs([
-			new(1, GridUnitType.Star),
-			new(1, GridUnitType.Auto),
-		]);
+		return new AutoGrid(IsRow: false)
+			.Cols("*,Auto")
+			.Margin(new Thickness(12, 10))
+			.Children(
+				new TextBox()
+					// 雙向綁定：輸入框寫回 Vm。
+					.Text(vm, x=>x.InputName, BindingMode.TwoWay)
+					.With(t => {
+						_InputName = t;
+						// 直接屬性（direct property）沒有生成鏈式方法，只能在 With 裡賦值。
+						t.PlaceholderText = Todo.I18n("輸入名字後按 Enter 或「加入」");
+						t.OnKeyDown(e => {
+							if(e.Key == Key.Enter){
+								// 吃掉按鍵，免得輸入框自己再處理一次。
+								e.Handled = true;
+								vm.AddName();
+							}
+						});
+					}),
 
-		R.Add(new TextBox()
-			// 雙向綁定：輸入框寫回 Vm。
-			.Text(vm, x=>x.InputName, BindingMode.TwoWay)
-			.With(t => {
-				_InputName = t;
-				// 直接屬性（direct property）沒有生成鏈式方法，只能在 With 裡賦值。
-				t.PlaceholderText = Todo.I18n("輸入名字後按 Enter 或「加入」");
-				t.OnKeyDown(e => {
-					if(e.Key == Key.Enter){
-						// 吃掉按鍵，免得輸入框自己再處理一次。
-						e.Handled = true;
-						vm.AddName();
-					}
-				});
-			})
-		);
-
-		R.Add(new Button()
-			.Content(Todo.I18n("加入"))
-			.Margin(new Thickness(8, 0, 0, 0))
-			.With(b => {
-				_BtnAdd = b;
-				b.Classes.Add(Cls.ToolBtn);
-				// 同步、非耗時的事件直接在這裡處理。
-				b.OnClick(_ => vm.AddName());
-			})
-		);
-
-		R.Grid.Margin = new Thickness(12, 10);
-		return R.Grid;
+				new Button()
+					.Content(Todo.I18n("加入"))
+					.Margin(new Thickness(8, 0, 0, 0))
+					.With(b => {
+						_BtnAdd = b;
+						b.Classes.Add(Cls.ToolBtn);
+						// 同步、非耗時的事件直接在這裡處理。
+						b.OnClick(_ => vm.AddName());
+					})
+			);
 	}
 
 	// ── 巢狀 Vm 的函數實現 ──

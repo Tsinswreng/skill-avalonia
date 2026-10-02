@@ -6,7 +6,6 @@ using Avalonia.Markup.Declarative;
 using MyProj;
 using MyProj.Infra;
 using MyProj.Services;
-using Tsinswreng.Avln.Grid;
 
 // 巢狀 Vm 在基底子句裡還不可見，故用別名引入，讓下面能直接寫 AppViewBase<Vm>。
 using Vm = ViewSample.Vm;
@@ -21,13 +20,12 @@ public partial class ViewSample : AppViewBase<Vm>{
 	[Doc("唯一的無參構造器。View 只能有無參構造器，Declarative 的視圖工廠與依賴注入都依賴它。")]
 	public partial ViewSample();
 
-	// 佈局容器，來自 Tsinswreng.Avln.Grid。
-	// 大多數場景用 GridStack 作視圖的根節點；它不是 Control 的子類，內部持有一個 Grid 屬性。
-	// 一個 GridStack 只能全為行或全為列，不要同時設置行和列。
-	// 每次 Add 時會自動設置行號或列號，因此不要手動設置行號列號。
-	// 優先使用 GridStack 或嵌套 GridStack，別用原生 Grid，除非你要手動設置行和列。
+	// 佈局容器。大多數場景用 AutoGrid 作視圖的根節點：它是 Grid 的子類，
+	// 子項一加進去就依順序自動落號，故不必自己算 Grid_Row、Grid_Column。
+	// 一個 AutoGrid 只能全為行或全為列，不要同時設置行和列；要兩維就嵌套。
+	// 需要手動指定行號列號時，改用原生 Grid。
 	// IsRow: true 表示全為行的佈局。
-	public GridStack Root = new(IsRow: true);
+	public AutoGrid Root = new(IsRow: true);
 
 	// 關鍵控件都要獨立作為類的 public 成員，以方便設計規劃與測試。
 	// 關鍵控件包括：涉及輸入操作的（按鈕、輸入框）、信息展示的（文本框）、

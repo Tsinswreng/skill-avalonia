@@ -33,10 +33,6 @@
 		<PackageReference Include="MarkupDeclarative.Roslyn4" Version="12.1.0" PrivateAssets="all" />
 		<!-- 提供 [Doc] 這個註解用的 Attr（見 tsinswreng-csharp-doc-attr 規範）。 -->
 		<PackageReference Include="Tsinswreng.CsCore" Version="0.0.1-alpha" />
-		<!-- 提供 GridStack：佈局容器，加子項時自動分配行號或列號。 -->
-		<PackageReference Include="Tsinswreng.Avln.Grid" Version="0.0.2-alpha" />
-		<!-- 提供 .A()、SetContent()、SetChild()：加子項與設置內容的鏈式方法。 -->
-		<PackageReference Include="Tsinswreng.Avln.Dsl" Version="0.3.0-alpha" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
 		<PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />

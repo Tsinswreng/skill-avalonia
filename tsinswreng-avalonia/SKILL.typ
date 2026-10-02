@@ -52,8 +52,7 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 
 	注:
 	- `AppViewBase<TVm>`、`ViewModelBase`、`IMk<T>`、`App.DiOrMk<T>()`、`Todo.I18n()`、
-		`GridStack`（`Tsinswreng.Avln.Grid`）、`.A()` 與 `SetContent()`、`SetChild()`
-		（`Tsinswreng.Avln.Dsl`）、`[Doc]` 與全域別名
+		`AutoGrid`（自動落號的 Grid 子類）、`[Doc]` 與全域別名
 		（`str`、`obj`、`nil`、`NIL`、`CT`）由項目提供，
 		`Init`、`CheckInit`、`Fire`、`HandleErr` 定義在 `ViewModelBase` 上。
 		若項目未定義則應請示用戶。
