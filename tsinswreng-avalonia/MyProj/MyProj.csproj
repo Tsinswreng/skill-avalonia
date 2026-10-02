@@ -6,6 +6,12 @@
 		<Nullable>enable</Nullable>
 		<TrimMode Condition="'$(Configuration)' != 'Debug'">copyused</TrimMode>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+		<!-- Avalonia 的遙測目標會寫 %LOCALAPPDATA%\AvaloniaUI\BuildServices\buildtasks.log；
+			 不可寫時 build 會以 MSB4018 失敗。清空本屬性即不執行該目標。 -->
+		<UsedAvaloniaProducts></UsedAvaloniaProducts>
+		<!-- 全域別名 str／obj／nil 全小寫是刻意的（與本規範各項目一致），
+			 故關掉「型別名稱僅含小寫 ASCII 字元」的提醒。 -->
+		<NoWarn>$(NoWarn);CS8981</NoWarn>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)' != 'Debug'">
 		<PublishAot>true</PublishAot>
@@ -21,6 +27,10 @@
 		<PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
 		<PackageReference Include="Avalonia.Markup.Declarative" Version="12.1.1" />
+		<!-- 官方生成器以 Roslyn 5.3 構建，而 SDK band 10.0.1xx 的編譯器是 5.0：
+			 不補這個補丁包會得到 CS9057（分析器無法載入）外加十幾條
+			 CS1061／CS1955（所有鏈式方法都找不到）。 -->
+		<PackageReference Include="MarkupDeclarative.Roslyn4" Version="12.1.0" PrivateAssets="all" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
 		<PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
