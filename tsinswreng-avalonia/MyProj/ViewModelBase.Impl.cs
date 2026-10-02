@@ -1,6 +1,6 @@
 namespace MyProj.Infra;
 
-public partial class ViewModelBase{
+public partial class AppVmBase{
 
 	public partial void Init(){
 		IsInited = true;

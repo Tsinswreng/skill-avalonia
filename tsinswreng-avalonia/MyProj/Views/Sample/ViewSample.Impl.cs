@@ -8,13 +8,13 @@ using Avalonia.Layout;
 using Avalonia.Markup.Declarative;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using MyProj.Infra;
 using MyProj.Services;
+using Tsinswreng.Avln.Grid;
 
 // 本檔只放函數實現。聲明與 [Doc] 註釋位於 ViewSample.cs。
 // 一屏一組 Impl：View 與它的巢狀 Vm 的實現都在本檔，不另外開 ViewSample.Vm.Impl.cs。
 // 控件樹與版面都用 Declarative 的擴展方法：.Rows()、.Cols()、.Children()、.With()。
-// 佈局容器用 AutoGrid，子項一加進去就自動落號，故不必自己算 Grid_Row、Grid_Column。
+// 佈局容器用 StackGrid（Tsinswreng.Avln.Grid），子項一加進去就自動落號，故不必自己算 Grid_Row、Grid_Column。
 public partial class ViewSample{
 
 	// View 只能有無參構造器。這裡解析 Vm 並交給基類的 vm，也就是設置 DataContext；
@@ -36,7 +36,7 @@ public partial class ViewSample{
 		];
 	}
 
-	// 控件樹由回傳值描述。佈局用成員 Root：它是 AutoGrid，子項一加進去就依順序自動落號，
+	// 控件樹由回傳值描述。佈局用成員 Root：它是 StackGrid，子項一加進去就依順序自動落號，
 	// 故不必自己算 Grid_Row、Grid_Column。
 	// 代碼塊的嵌套層級要和實際控件樹結構保持一致：根節點縮進最少、越深的子控件縮進越多。
 	// Vm 由泛型基類傳入，型別已確定，故不判空。

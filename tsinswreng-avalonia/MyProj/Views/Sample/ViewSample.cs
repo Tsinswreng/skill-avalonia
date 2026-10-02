@@ -6,23 +6,20 @@ using Avalonia.Markup.Declarative;
 using MyProj;
 using MyProj.Infra;
 using MyProj.Services;
+using Tsinswreng.Avln.Grid;
 
 // 巢狀 Vm 在基底子句裡還不可見，故用別名引入，讓下面能直接寫 AppViewBase<Vm>。
 using Vm = ViewSample.Vm;
 
-[Doc(@"綜合示例視圖。這裡示範本規範的 View 與 Vm 寫法。
-本檔只放聲明與註釋：控件、事件、樣式的掛載點，以及巢狀 Vm 的狀態與命令。
-函數實現全部放在 ViewSample.Impl.cs。
-#See[ViewSample.Impl][實現]
-")]
+[Doc(@"記得在這裏寫該寫的註釋")]
 public partial class ViewSample : AppViewBase<Vm>{
 
 	[Doc("唯一的無參構造器。View 只能有無參構造器，Declarative 的視圖工廠與依賴注入都依賴它。")]
 	public partial ViewSample();
 
-	// 佈局容器。大多數場景用 AutoGrid 作視圖的根節點：它是 Grid 的子類，
+	// 佈局容器。大多數場景用 StackGrid 作視圖的根節點：它是 Grid 的子類，
 	// 子項一加進去就依順序自動落號，故不必自己算 Grid_Row、Grid_Column。
-	// 一個 AutoGrid 只能全為行或全為列，不要同時設置行和列；要兩維就嵌套。
+	// 一個 StackGrid 只能全為行或全為列，不要同時設置行和列；要兩維就嵌套。
 	// 需要手動指定行號列號時，改用原生 Grid。
 	// IsRow: true 表示全為行的佈局。
 	public StackGrid Root = new(IsRow: true);
@@ -105,11 +102,11 @@ Vm 由泛型基類傳入，型別已確定，故不必判空。
 少數情況（一個 Vm 給多個 View 共用、或被非 UI 層使用）才拆成獨立的 VmXxx 型別。
 Vm 只曝露狀態與命令：不做視圖跳轉、不操作控件、不耦合 View 層細節。
 ")]
-	public partial class Vm : ViewModelBase, IMk<Vm>{
+	[Doc(@$"記得在這裏寫該寫的註釋")]
+	public partial class Vm : AppVmBase, IMk<Vm>{
 
 		[Doc("供 Mk() 使用的無參構造器。所有 Vm 都要有 protected 的無參構造器。")]
-		protected Vm(){
-		}
+		protected Vm(){}
 
 		[Doc(@"用于從外部直接創建對象、不注入依賴，單元測試也用它。
 不能定義多個 public 構造器，否則依賴注入無法確定該用哪一個。

@@ -8,11 +8,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 任何需要依賴的 public 方法開頭應調用 CheckInit，及早暴露「用 Mk() 造出來卻當成注入實例使用」的錯誤。
 屬性通知用 SetProperty(ref field, value)（來自 ObservableObject），搭配 C# 的 field 關鍵字。
 ")]
-public partial class ViewModelBase : ObservableObject{
+public partial class AppVmBase : ObservableObject{
 
 	[Doc(@"供子類以「不注入依賴」方式建立時使用（見 Mk()）。
 設為 protected：禁止外部直接 new 出一個沒有依賴的 Vm。")]
-	protected ViewModelBase(){
+	protected AppVmBase(){
 	}
 
 	[Doc("是否已完成初始化。由 Init 設為 true。")]

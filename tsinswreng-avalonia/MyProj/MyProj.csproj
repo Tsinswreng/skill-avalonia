@@ -39,6 +39,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- 佈局容器 StackGrid。實作在本工作區的 Tsinswreng.Avln.Grid，各處共用一份。 -->
+		<ProjectReference Include="..\..\..\..\..\Tsinswreng.Avln.Grid\proj\Tsinswreng.Avln.Grid\Tsinswreng.Avln.Grid.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Using Include="System" />
 		<Using Include="Avalonia" />
 		<Using Include="Avalonia.Controls" />
