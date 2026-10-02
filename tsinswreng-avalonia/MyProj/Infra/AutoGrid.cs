@@ -9,13 +9,13 @@ using System.Collections.Specialized;
 一個 AutoGrid 只能全為行或全為列，不要同時設置行和列；需要兩維時就嵌套。
 需要手動指定行號列號時，改用原生 Grid。
 IsRow: true 表示全為行的佈局。")]
-public partial class AutoGrid : Grid{
+public partial class StackGrid : Grid{
 
 	[Doc("全為行時為 true，全為列時為 false。")]
 	public bool IsRow{get;set;} = true;
 
 	[Doc("依 IsRow 決定這個容器管的是行還是列。")]
-	public partial AutoGrid(bool IsRow = true);
+	public partial StackGrid(bool IsRow = true);
 
 	[Doc(@"子項集合變動時落號。
 加入只寫新子項；移除、移動、替換從受影響的位置起把尾段重排；清空不做事。")]

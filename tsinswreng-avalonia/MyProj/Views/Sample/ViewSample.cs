@@ -25,7 +25,7 @@ public partial class ViewSample : AppViewBase<Vm>{
 	// 一個 AutoGrid 只能全為行或全為列，不要同時設置行和列；要兩維就嵌套。
 	// 需要手動指定行號列號時，改用原生 Grid。
 	// IsRow: true 表示全為行的佈局。
-	public AutoGrid Root = new(IsRow: true);
+	public StackGrid Root = new(IsRow: true);
 
 	// 關鍵控件都要獨立作為類的 public 成員，以方便設計規劃與測試。
 	// 關鍵控件包括：涉及輸入操作的（按鈕、輸入框）、信息展示的（文本框）、

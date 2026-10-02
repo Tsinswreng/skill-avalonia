@@ -3,9 +3,9 @@ namespace MyProj.Infra;
 using Avalonia.Controls;
 using System.Collections.Specialized;
 
-public partial class AutoGrid{
+public partial class StackGrid{
 
-	public partial AutoGrid(bool IsRow = true){
+	public partial StackGrid(bool IsRow = true){
 		this.IsRow = IsRow;
 		((INotifyCollectionChanged)Children).CollectionChanged += OnChildrenChanged;
 	}

@@ -109,7 +109,7 @@ public partial class ViewSample{
 
 	// 輸入列：輸入框與加入按鈕。不需要指定 BindingMode 的綁定就不要寫。
 	public partial Control MkInputRow(Vm vm){
-		return new AutoGrid(IsRow: false)
+		return new StackGrid(IsRow: false)
 			.Cols("*,Auto")
 			.Margin(new Thickness(12, 10))
 			.Children(
