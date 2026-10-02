@@ -40,12 +40,6 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		常見還有 `VAlign`／`HAlign`／`BindingMode`（`Avalonia.Layout.VerticalAlignment` 等的別名）。
 		通常集中放在 `GlobalUsing.cs`。
 	]
-	#P[
-		跨層 API 慣例（與 Ngan 各前端一致）：
-		所有對外 API 的第一個參數是 `IFnCtx? Ctx`（可空，當前實現多數不使用）；
-		非同步 API 的最後一個參數是 `CT Ct`。
-		若項目沒有 `IFnCtx`，依該項目既有寫法，並在動工前確認。
-	]
 ]
 
 
@@ -104,8 +98,8 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		要寫 `%LOCALAPPDATA%\AvaloniaUI\BuildServices\buildtasks.log`；
 		被拒時整個建置以 `MSB4018` 中止，而且錯誤訊息與編譯毫無關係。
 	]
-	- #[`PublishAot=true`（至少 Release）：本系列項目要求 AOT 相容。
-		因此*禁用反射式激活*（`ActivatorUtilities`、`Activator.CreateInstance`），
+	- #[`PublishAot=true`（至少 Release）：AOT 相容是硬要求，
+		故*禁用反射式激活*（`ActivatorUtilities`、`Activator.CreateInstance`）。
 		DI 一律用工廠 lambda：`Svc.AddSingleton<VmXxx>(sp => new VmXxx(...))`。
 	]
 	- #[建置請帶 `-nodeReuse:false -m:1`。
@@ -166,7 +160,7 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		public partial void Click1();
 
 		/// 記得在這裏寫註釋
-		public partial Task<nil> CallService(IFnCtx? Ctx, CT Ct);
+		public partial Task<nil> CallService(CT Ct);
 	}
 	````
 
@@ -198,12 +192,12 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		}
 
 		// 呼叫後端服務：聲明為非同步函數、函數名不需特殊後綴、最後一個參數設為 CT Ct。
-		public partial async Task<nil> CallService(IFnCtx? Ctx, CT Ct){
+		public partial async Task<nil> CallService(CT Ct){
 			CheckInit();
 
 			// step 1: 耗時工作切到線程池，防止 UI 卡頓。
 			//         若項目提供了封裝（例如 RunTask）就優先用它；沒有才用 Task.Run。
-			var R = await Task.Run(() => SvcUser.ServeApi1(Ctx, Ct), Ct);
+			var R = await Task.Run(() => SvcUser.ServeApi1(Ct), Ct);
 
 			// step 2: 背景線程要改動被綁定的屬性時，切回 UI 線程再改。
 			await Dispatcher.UIThread.InvokeAsync(() => {
@@ -250,8 +244,10 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		// 基類刻意保持非泛型：源生成器不對泛型基類做型別參數代換，
 		// 會生成引用 TCtx 的非法代碼（CS0246）。
 		// 故改為各視圖自己聲明強型別的 Ctx。
-		public VmUserProfile? Ctx{
-			get{ return DataContext as VmUserProfile; }
+		// 構造器一定會設好它，故宣告為非空型別；
+		// 這樣 Build()／OnLoaded() 直接用，不必判空、也不必 throw。
+		public VmUserProfile Ctx{
+			get{ return (VmUserProfile)DataContext!; }
 			set{ DataContext = value; }
 		}
 
@@ -306,22 +302,20 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 	public partial class ViewUserProfile{
 
 		public partial ViewUserProfile(){
-			// View 的構造器一定會設好 Ctx；
-			// Build() 不接受 null 綁定來源，故缺 Vm 時直接失敗比產生空界面好定位。
+			// 構造器一定會設好 Ctx，故 Ctx 宣告為非空型別。
 			Ctx = App.DiOrMk<VmUserProfile>();
 		}
 
 		protected override partial void OnLoaded(){
-			var vm = Ctx;
-			if(vm is null){
-				return;
-			}
 			// 耗時初始化放這裏（例如向後端要資料）。
+			// 取 Vm 直接用 Ctx，不需要判空。
+			// 非同步呼叫建議經由 View 內的 Fire(...) 這類輔助方法（見「事件怎麼寫」）。
 		}
 
 		protected override partial obj Build(){
-			var vm = Ctx ?? throw new InvalidOperationException(
-				$"{nameof(ViewUserProfile)} 缺少 ViewModel（Ctx 為 null），無法建立控件樹。");
+			// 直接用 Ctx：它不可空，故不判空、不 throw。
+			// 「用錯方式建立視圖」的診斷由基類統一負責一次，不該在每個 View 各抄一段。
+			var vm = Ctx;
 
 			// 控件樹由回傳值描述，父子關係用 Children(...)。
 			// 代碼塊的嵌套層級要和實際控件樹結構保持一致：
@@ -550,6 +544,8 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 		- 不要把事件處理器寫成 `async void`
 		- 不要硬編碼 UI 文本、字體大小、樣式類名
 		- 不要為了「拆函數而拆函數」；只有嵌套過深或子區塊相對獨立時才抽 `MkXxx()`
+		- 不要在每個 View 的 `Build()` 裏重複寫 `Ctx ?? throw ...` 這種判空樣板；
+			`Ctx` 由構造器設好且不可空，直接用即可
 		- 不要在 `Xxx.cs` 中寫函數實現；聲明與實現必須分離到 `Xxx.Impl.cs`
 		- 不要用 `ActivatorUtilities`／`Activator.CreateInstance` 這類反射式激活（AOT 不相容）
 		- 不要在基礎設施是否存在、命名是否一致、規範是否適配當前項目這些問題上自行猜測；
