@@ -105,12 +105,12 @@ Vm 只曝露狀態與命令：不做視圖跳轉、不操作控件、不耦合 V
 	[Doc(@$"記得在這裏寫該寫的註釋")]
 	public partial class Vm : AppVmBase, IMk<Vm>{
 
-		[Doc("供 Mk() 使用的無參構造器。所有 Vm 都要有 protected 的無參構造器。")]
+		[Doc(@$"所有 Vm 都要有 protected 的無參構造器,
+		供{nameof(Mk)}用。")]
 		protected Vm(){}
 
 		[Doc(@"用于從外部直接創建對象、不注入依賴，單元測試也用它。
-不能定義多個 public 構造器，否則依賴注入無法確定該用哪一個。
-")]
+不能定義多個 public 構造器，否則依賴注入無法確定該用哪一個。")]
 		public static partial Vm Mk();
 
 		[Doc("依賴聲明。不需要加任何修飾符、不需要 {get;set;}、都初始化為 default!。")]
