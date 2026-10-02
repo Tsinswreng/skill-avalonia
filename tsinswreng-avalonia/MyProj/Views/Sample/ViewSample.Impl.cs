@@ -141,27 +141,29 @@ public partial class ViewSample{
 			);
 	}
 
-	// ── 巢狀 Vm 的函數實現 ──
-
 	public partial class Vm{
 
-		// 依賴注入用的構造器：設置完依賴後才標記初始化完成。
-		public partial Vm(SvcNames SvcNames){
+		public partial Vm(
+			ISvcUserCtx SvcUserCtx
+			,SvcNames SvcNames
+		){
+			this.SvcUserCtx = SvcUserCtx;
 			this.SvcNames = SvcNames;
-			base.Init();
+			base.Init();//標記初始化完成。
 		}
 
 		// 沿著 protected 無參構造器建立；此實例沒有依賴，
-		// 需要服務的操作會被 CheckInit() 擋下。
 		public static partial Vm Mk(){
 			return new Vm();
 		}
 
-		// 同步、無耗時操作，故直接綁到按鈕與回車。
+		//無參非異步函數、用于給普通按鈕綁定、只涉及ViewModel內部狀態的修改 無耗時操作
 		public partial void AddName(){
 			// step 1: 空輸入時用「未命名」，免得清單出現看不出是什麼的空白項。
 			var name = InputName.Trim();
 			if(name.Length == 0){
+				//UI顯示的字符串及異常信息字符串都禁止硬編碼。
+				//可臨時用Todo.I18n。
 				name = Todo.I18n("未命名");
 			}
 
@@ -171,7 +173,6 @@ public partial class ViewSample{
 			StatusText = Todo.I18n($"已加入：{name}（共 {Names.Count} 個）");
 		}
 
-		// 同步、無耗時操作。沒有選中項時只提示，不改清單。
 		public partial void RemoveSelected(){
 			if(SelectedName is null){
 				StatusText = Todo.I18n("請先在清單中選一個名字");
@@ -184,22 +185,23 @@ public partial class ViewSample{
 			StatusText = Todo.I18n($"已移除：{name}（共 {Names.Count} 個）");
 		}
 
-		// 非同步工作一律由 Fire 啟動：它在失敗時交給 HandleErr。
+		// 非同步工作一律由 Fire 啟動
 		// 不可在視圖或生命週期回調裡裸呼叫 Load，那樣例外會成為未被觀察的例外。
 		public partial void Reload(){
 			Fire(Load(default));
 		}
 
-		// 耗時工作放線程池；改動被綁定的集合與屬性前，切回 UI 線程。
+		// 服務本身是非同步的，故這裡直接 await；改動被綁定的集合與屬性前，切回 UI 線程。
 		public partial async Task<nil> Load(CT Ct){
-			var names = await Task.Run(() => SvcNames.DefaultNames, Ct);
+			var userCtx = SvcUserCtx.GetUserCtx();
+			var names = await SvcNames.GetNames(userCtx, Ct);
 
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				Names.Clear();
 				foreach(var one in names){
 					Names.Add(one);
 				}
-				StatusText = Todo.I18n($"已載入 {Names.Count} 個名字");
+				StatusText = Todo.I18n($"已載入 {Names.Count} 個名字（{userCtx.Name}）");
 			});
 
 			return NIL;

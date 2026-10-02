@@ -114,55 +114,43 @@ Vm 只曝露狀態與命令：不做視圖跳轉、不操作控件、不耦合 V
 		public static partial Vm Mk();
 
 		[Doc("依賴聲明。不需要加任何修飾符、不需要 {get;set;}、都初始化為 default!。")]
+		ISvcUserCtx SvcUserCtx = default!;
 		SvcNames SvcNames = default!;
+		
 
-		[Doc(@"唯一的 public 構造器，供依賴注入。設置完依賴後呼叫 Init。
-#Prm[示例資料來源]
-")]
-		public partial Vm(SvcNames SvcNames);
+		[Doc(@"唯一的 public 構造器，供依賴注入")]
+		public partial Vm(
+			ISvcUserCtx SvcUserCtx
+			,SvcNames SvcNames
+		);
 
-		[Doc(@"名字清單。
-用于綁定的屬性，getter 與 setter 必須定義成這個形狀，無特殊情況必須使用 field 關鍵字。
-裸的自動屬性不發通知，會讓 Vm 到 View 的方向靜默失效。
-")]
-		public ObservableCollection<str> Names{
-			get;
-			set{ SetProperty(ref field, value); }
-		} = [];
-
-		[Doc("輸入框內容。雙向綁定，故界面改動會寫回這裡。")]
+		[Doc("用于綁定的屬性的getter和setter必須定義成這樣、無特殊情況(如轉發其他屬性)則必須使用field關鍵字。")]
 		public str InputName{
 			get;
 			set{ SetProperty(ref field, value); }
 		} = "";
 
-		[Doc("清單中選中的名字。雙向綁定。")]
+		[Doc($"記得在成員上寫該寫的註釋")]
+		public ObservableCollection<str> Names{
+			get;
+			set{ SetProperty(ref field, value); }
+		} = [];
+
 		public str? SelectedName{
 			get;
 			set{ SetProperty(ref field, value); }
 		}
 
-		[Doc("狀態文字。供狀態列顯示。")]
 		public str StatusText{
 			get;
 			set{ SetProperty(ref field, value); }
 		} = Todo.I18n("就緒");
 
-		[Doc("把輸入框的名字加入清單。同步、無耗時操作，直接綁到按鈕與回車。")]
+		
+		[Doc($"記得在函數上寫該寫的註釋")]
 		public partial void AddName();
-
-		[Doc("移除清單中選中的名字。同步、無耗時操作。")]
 		public partial void RemoveSelected();
-
-		[Doc(@"重新載入清單。同步命令，內部用 Fire 啟動非同步工作。
-View 與生命週期回調都是 void，不能 await，故不直接呼叫 Load。
-")]
 		public partial void Reload();
-
-		[Doc(@"向服務載入名字清單。
-非同步工作只由 Fire 啟動，不要在視圖或生命週期回調裡裸呼叫它。
-#Prm[取消令牌]
-")]
 		public partial Task<nil> Load(CT Ct);
 	}
 }

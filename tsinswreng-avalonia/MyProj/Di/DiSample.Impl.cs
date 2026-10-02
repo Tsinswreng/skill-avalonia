@@ -12,11 +12,16 @@ public static partial class DiSample{
 		//         本示例為了精簡只有一個具體類。
 		Svc.AddSingleton<SvcNames>();
 
-		// step 2: ViewModel 一律註冊為單例：視圖可能被重建，而狀態應在重建後保留。
+		// step 2: 用戶上下文的端口與實現。
+		//         調用方只依賴端口，換來源時不必動 Ui 層。
+		Svc.AddSingleton<ISvcUserCtx, SvcUserCtx>();
+
+		// step 3: ViewModel 一律註冊為單例：視圖可能被重建，而狀態應在重建後保留。
 		//         這裡用工廠 lambda 而不是 ActivatorUtilities：後者是反射式的，
 		//         需要運行期保留建構器資訊，與 AOT 要求相衝，且依賴關係會變得隱晦。
 		Svc.AddSingleton<ViewSample.Vm>(sp => new ViewSample.Vm(
-			sp.GetRequiredService<SvcNames>()));
+			sp.GetRequiredService<SvcNames>(),
+			sp.GetRequiredService<ISvcUserCtx>()));
 
 		return Svc;
 	}
