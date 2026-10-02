@@ -20,6 +20,10 @@ global using obj = System.Object;
 global using nil = System.Object;
 global using CT = System.Threading.CancellationToken;
 
+// [Doc] 這個註解用的 Attr 由 Tsinswreng.CsCore 提供。
+// 全域引入，讓各檔案不必逐一 using，符合「[Doc] 理應全局直接可用」的約定。
+global using Tsinswreng.CsCore;
+
 #pragma warning disable CS0436
 global using static Tsinswreng.CsTypeAlias.Nil;
 namespace Tsinswreng.CsTypeAlias {

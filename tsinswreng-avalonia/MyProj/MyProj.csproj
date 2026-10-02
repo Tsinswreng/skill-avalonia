@@ -31,6 +31,8 @@
 			 不補這個補丁包會得到 CS9057（分析器無法載入）外加十幾條
 			 CS1061／CS1955（所有鏈式方法都找不到）。 -->
 		<PackageReference Include="MarkupDeclarative.Roslyn4" Version="12.1.0" PrivateAssets="all" />
+		<!-- 提供 [Doc] 這個註解用的 Attr（見 tsinswreng-csharp-doc-attr 規範）。 -->
+		<PackageReference Include="Tsinswreng.CsCore" Version="0.0.1-alpha" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
 		<PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />

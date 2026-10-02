@@ -7,15 +7,17 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Declarative;
 using Avalonia.Styling;
-using MyProj.Infra;
+using Avalonia.Threading;
+using MyProj.Services;
 
 public partial class ViewSample{
 
 	public partial ViewSample(){
 		// 容器有註冊就用容器提供的單例（見 DiSample.SetupSample）；
 		// 沒註冊則退回 Mk()（此時沒有依賴，需要服務的操作會被 CheckInit() 擋下）。
-		// 設置 DataContext（= 基類的 ViewModel）會觸發庫的延遲初始化 → 立刻呼叫 Build(vm)。
-		ViewModel = App.DiOrMk<Vm>();
+		// 通過基類的 vm 設 DataContext，會觸發庫的延遲初始化 → 立刻呼叫 Build(vm)。
+		// 一律用 vm 這一個名字，不要有時寫 vm、有時寫 ViewModel。
+		vm = App.DiOrMk<Vm>();
 	}
 
 	protected override partial StyleGroup? BuildStyles(){
@@ -48,7 +50,9 @@ public partial class ViewSample{
 	}
 
 	protected override partial void OnAfterInitialized(){
-		Fire(vm, vm.Load(CancellationToken.None));
+		// 生命週期回調是 void，不能 await，故呼叫 Vm 的同步命令，
+		// 由 Vm 內部用 Fire 啟動非同步工作。
+		vm.Reload();
 	}
 
 	public partial Control MkToolbar(Vm vm){
@@ -61,8 +65,8 @@ public partial class ViewSample{
 					.With(b => {
 						_BtnReload = b;
 						b.Classes.Add(Cls.ToolBtn);
-						// 非同步操作用 Fire 收斂例外；不要寫成 async void。
-						b.OnClick(_ => Fire(vm, vm.Load(CancellationToken.None)));
+						// 事件處理器是 void，不能 await，故呼叫 Vm 的同步命令。
+						b.OnClick(_ => vm.Reload());
 					}),
 
 				new Button()
@@ -122,17 +126,63 @@ public partial class ViewSample{
 			);
 	}
 
-	private partial void Fire(Vm vm, Task<nil> Op){
-		// 刻意不 await：生命週期回調與事件處理器不能阻塞。
-		_ = FireCore(vm, Op);
-	}
+	// ── 巢狀 Vm 的函數實現 ──
+	// 宣告在 ViewSample.cs。一屏一組 Impl：View 與它的 Vm 的實現都在本檔，
+	// 不另外開 ViewSample.Vm.Impl.cs。
 
-	private partial async Task<nil> FireCore(Vm vm, Task<nil> Op){
-		try{
-			await Op;
-		}catch(Exception ex){
-			vm.StatusText = Todo.I18n("操作失敗： "+ex.Message);
+	public partial class Vm{
+
+		public partial Vm(SvcNames SvcNames){
+			this.SvcNames = SvcNames;
+			// 依賴設置完畢後才標記初始化完成。
+			base.Init();
 		}
-		return NIL;
+
+		public static partial Vm Mk(){
+			// 沿著 protected 無參構造器建立；此實例沒有依賴，
+			// 需要服務的操作會被 CheckInit() 擋下。
+			return new Vm();
+		}
+
+		public partial void AddName(){
+			var name = InputName.Trim();
+			if(name.Length == 0){
+				name = Todo.I18n("未命名");
+			}
+
+			Names.Add(name);
+			InputName = "";
+			StatusText = Todo.I18n($"已加入：{name}（共 {Names.Count} 個）");
+		}
+
+		public partial void RemoveSelected(){
+			if(SelectedName is null){
+				StatusText = Todo.I18n("請先在清單中選一個名字");
+				return;
+			}
+
+			var name = SelectedName;
+			Names.Remove(name);
+			SelectedName = null;
+			StatusText = Todo.I18n($"已移除：{name}（共 {Names.Count} 個）");
+		}
+
+		public partial void Reload(){
+			// 非同步工作一律由 Fire 啟動：它在失敗時交給 HandleErr。
+			// 不可在視圖或生命週期回調裡裸呼叫 Load，那樣例外會成為未被觀察的例外。
+			Fire(Load(default));
+		}
+
+		public partial async Task<nil> Load(CT Ct){
+			await Dispatcher.UIThread.InvokeAsync(() => {
+				Names.Clear();
+				foreach(var one in SvcNames.DefaultNames){
+					Names.Add(one);
+				}
+				StatusText = Todo.I18n($"已載入 {Names.Count} 個名字");
+			});
+
+			return NIL;
+		}
 	}
 }
