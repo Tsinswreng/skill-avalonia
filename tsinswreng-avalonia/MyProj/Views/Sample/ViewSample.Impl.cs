@@ -37,8 +37,8 @@ public partial class ViewSample{
 		];
 	}
 
-	// 控件樹由回傳值描述。佈局用成員 Root：每次 A() 或 Add() 時 GridStack 自動把行號
-	// 或列號設成遞增的序號，故不必自己算 Grid_Row、Grid_Column。
+	// 控件樹由回傳值描述。佈局用成員 Root：每次 Add 時 GridStack 自動把行號或列號設成遞增的序號，
+	// 故不必自己算 Grid_Row、Grid_Column。Dsl 那套的 .A() 在 Declarative 裡沒有，用 Add。
 	// 代碼塊的嵌套層級要和實際控件樹結構保持一致：根節點縮進最少、越深的子控件縮進越多。
 	// Vm 由泛型基類傳入，型別已確定，故不判空。
 	protected override partial object Build(Vm vm){
@@ -50,13 +50,16 @@ public partial class ViewSample{
 			new(1, GridUnitType.Auto),
 		]);
 
-		Root.A(MkToolbar(vm))
-			.A(MkList(vm))
-			.A(MkInputRow(vm))
-			.A(new TextBlock(), t => {
+		Root.Add(MkToolbar(vm));
+		Root.Add(MkList(vm));
+		Root.Add(MkInputRow(vm));
+		Root.Add(new TextBlock()
+			.Text(vm, x=>x.StatusText)
+			.Margin(new Thickness(12, 0, 12, 10))
+			.With(t => {
 				_StatusText = t;
-				t.Text(vm, x=>x.StatusText).Margin(new Thickness(12, 0, 12, 10));
-			});
+			})
+		);
 
 		return Root.Grid;
 	}
@@ -68,40 +71,45 @@ public partial class ViewSample{
 	}
 
 	// 抽出的子區塊：只在嵌套過深、或該區塊相對獨立時才抽，不要為了拆函數而拆函數。
-	// 關鍵控件在初始化回調裡提出來，供測試與後續操作使用。
+	// 關鍵控件在 With(...) 裡提出來，供測試與後續操作使用。
 	public partial Control MkToolbar(Vm vm){
-		var R = new StackPanel();
-		R.Orientation = Orientation.Horizontal;
-		R.Margin = new Thickness(12);
-		R.A(new Button(), b => {
-				_BtnReload = b;
-				b.Classes.Add(Cls.ToolBtn);
-				// UI 文本走 Todo.I18n，禁止硬編碼。
-				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("重新載入"));
-				// 事件處理器是 void，不能 await，故呼叫 Vm 的同步命令。
-				b.OnClick(_ => vm.Reload());
-			})
-			.A(new Button(), b => {
-				_BtnRemove = b;
-				b.Classes.Add(Cls.ToolBtn);
-				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("移除選中"));
-				b.OnClick(_ => vm.RemoveSelected());
-			});
-		return R;
+		return new StackPanel()
+			.Orientation(Orientation.Horizontal)
+			.Margin(new Thickness(12))
+			.Children(
+				new Button()
+					// UI 文本走 Todo.I18n，禁止硬編碼。
+					.Content(Todo.I18n("重新載入"))
+					.With(b => {
+						_BtnReload = b;
+						b.Classes.Add(Cls.ToolBtn);
+						// 事件處理器是 void，不能 await，故呼叫 Vm 的同步命令。
+						b.OnClick(_ => vm.Reload());
+					}),
+
+				new Button()
+					.Content(Todo.I18n("移除選中"))
+					.With(b => {
+						_BtnRemove = b;
+						b.Classes.Add(Cls.ToolBtn);
+						b.OnClick(_ => vm.RemoveSelected());
+					})
+			);
 	}
 
 	// 清單：來源與選中項都綁到 Vm。
 	public partial Control MkList(Vm vm){
-		var R = new ListBox();
-		_ListNames = R;
-		R.Margin = new Thickness(12, 0);
-		// 綁定的第二個參數是 Vm 實例、第三個是成員選擇器；這是編譯期綁定，AOT 安全。
-		R.ItemsSource(vm, x=>x.Names);
-		R.SelectedItem(vm, x=>x.SelectedName, BindingMode.TwoWay);
-		// 項目模板的參數必須可空：虛擬化回收容器時，模板會被以 null 呼叫。
-		R.ItemTemplate(new FuncDataTemplate<str>((Item, _) =>
-			Item is null ? null : new TextBlock().Text(Item)));
-		return R;
+		return new ListBox()
+			// 綁定的第二個參數是 Vm 實例、第三個是成員選擇器；這是編譯期綁定，AOT 安全。
+			.ItemsSource(vm, x=>x.Names)
+			.SelectedItem(vm, x=>x.SelectedName, BindingMode.TwoWay)
+			.Margin(new Thickness(12, 0))
+			// 項目模板的參數必須可空：虛擬化回收容器時，模板會被以 null 呼叫。
+			.ItemTemplate(new FuncDataTemplate<str>((Item, _) =>
+				Item is null ? null : new TextBlock().Text(Item)))
+			.With(l => {
+				_ListNames = l;
+			});
 	}
 
 	// 輸入列：輸入框與加入按鈕。不需要指定 BindingMode 的綁定就不要寫。
@@ -112,11 +120,12 @@ public partial class ViewSample{
 			new(1, GridUnitType.Auto),
 		]);
 
-		R.A(new TextBox(), t => {
+		R.Add(new TextBox()
+			// 雙向綁定：輸入框寫回 Vm。
+			.Text(vm, x=>x.InputName, BindingMode.TwoWay)
+			.With(t => {
 				_InputName = t;
-				// 雙向綁定：輸入框寫回 Vm。
-				t.Text(vm, x=>x.InputName, BindingMode.TwoWay);
-				// 直接屬性（direct property）沒有生成鏈式方法，直接賦值。
+				// 直接屬性（direct property）沒有生成鏈式方法，只能在 With 裡賦值。
 				t.PlaceholderText = Todo.I18n("輸入名字後按 Enter 或「加入」");
 				t.OnKeyDown(e => {
 					if(e.Key == Key.Enter){
@@ -126,14 +135,18 @@ public partial class ViewSample{
 					}
 				});
 			})
-			.A(new Button(), b => {
+		);
+
+		R.Add(new Button()
+			.Content(Todo.I18n("加入"))
+			.Margin(new Thickness(8, 0, 0, 0))
+			.With(b => {
 				_BtnAdd = b;
 				b.Classes.Add(Cls.ToolBtn);
-				b.Margin = new Thickness(8, 0, 0, 0);
-				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("加入"));
 				// 同步、非耗時的事件直接在這裡處理。
 				b.OnClick(_ => vm.AddName());
-			});
+			})
+		);
 
 		R.Grid.Margin = new Thickness(12, 10);
 		return R.Grid;
