@@ -9,9 +9,13 @@ using Avalonia.Markup.Declarative;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using MyProj.Services;
+using Tsinswreng.Avln.Dsl;
+using Tsinswreng.Avln.Grid;
 
 // 本檔只放函數實現。聲明與 [Doc] 註釋位於 ViewSample.cs。
 // 一屏一組 Impl：View 與它的巢狀 Vm 的實現都在本檔，不另外開 ViewSample.Vm.Impl.cs。
+// 加子項與設置內容用 Dsl 的 .A()、SetContent()、SetChild()，佈局用 GridStack；
+// 屬性、綁定、事件與樣式用 Declarative 的擴展方法。同一件事只挑一邊寫。
 public partial class ViewSample{
 
 	// View 只能有無參構造器。這裡解析 Vm 並交給基類的 vm，也就是設置 DataContext；
@@ -33,26 +37,28 @@ public partial class ViewSample{
 		];
 	}
 
-	// 控件樹由回傳值描述，父子關係用 Children(...)。
+	// 控件樹由回傳值描述。佈局用成員 Root：每次 A() 或 Add() 時 GridStack 自動把行號
+	// 或列號設成遞增的序號，故不必自己算 Grid_Row、Grid_Column。
 	// 代碼塊的嵌套層級要和實際控件樹結構保持一致：根節點縮進最少、越深的子控件縮進越多。
 	// Vm 由泛型基類傳入，型別已確定，故不判空。
 	protected override partial object Build(Vm vm){
 		// 四列單欄：工具列 / 清單 / 輸入列 / 狀態列。
-		return new Grid()
-			.Rows("Auto,*,Auto,Auto")
-			.Children(
-				MkToolbar(vm).Grid_Row(0),
-				MkList(vm).Grid_Row(1),
-				MkInputRow(vm).Grid_Row(2),
+		Root.SetRowDefs([
+			new(1, GridUnitType.Auto),
+			new(1, GridUnitType.Star),
+			new(1, GridUnitType.Auto),
+			new(1, GridUnitType.Auto),
+		]);
 
-				new TextBlock()
-					.Text(vm, x=>x.StatusText)
-					.Margin(new Thickness(12, 0, 12, 10))
-					.Grid_Row(3)
-					.With(t => {
-						_StatusText = t;
-					})
-			);
+		Root.A(MkToolbar(vm))
+			.A(MkList(vm))
+			.A(MkInputRow(vm))
+			.A(new TextBlock(), t => {
+				_StatusText = t;
+				t.Text(vm, x=>x.StatusText).Margin(new Thickness(12, 0, 12, 10));
+			});
+
+		return Root.Grid;
 	}
 
 	// 生命週期回調：控件樹與樣式都建好之後由庫觸發，耗時初始化放這裡。
@@ -62,81 +68,75 @@ public partial class ViewSample{
 	}
 
 	// 抽出的子區塊：只在嵌套過深、或該區塊相對獨立時才抽，不要為了拆函數而拆函數。
-	// 關鍵控件在 With(...) 裡提出來，供測試與後續操作使用。
+	// 關鍵控件在初始化回調裡提出來，供測試與後續操作使用。
 	public partial Control MkToolbar(Vm vm){
-		return new StackPanel()
-			.Orientation(Orientation.Horizontal)
-			.Margin(new Thickness(12))
-			.Children(
-				new Button()
-					// UI 文本走 Todo.I18n，禁止硬編碼。
-					.Content(Todo.I18n("重新載入"))
-					.With(b => {
-						_BtnReload = b;
-						b.Classes.Add(Cls.ToolBtn);
-						// 事件處理器是 void，不能 await，故呼叫 Vm 的同步命令。
-						b.OnClick(_ => vm.Reload());
-					}),
-
-				new Button()
-					.Content(Todo.I18n("移除選中"))
-					.With(b => {
-						_BtnRemove = b;
-						b.Classes.Add(Cls.ToolBtn);
-						b.OnClick(_ => vm.RemoveSelected());
-					})
-			);
+		var R = new StackPanel();
+		R.Orientation = Orientation.Horizontal;
+		R.Margin = new Thickness(12);
+		R.A(new Button(), b => {
+				_BtnReload = b;
+				b.Classes.Add(Cls.ToolBtn);
+				// UI 文本走 Todo.I18n，禁止硬編碼。
+				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("重新載入"));
+				// 事件處理器是 void，不能 await，故呼叫 Vm 的同步命令。
+				b.OnClick(_ => vm.Reload());
+			})
+			.A(new Button(), b => {
+				_BtnRemove = b;
+				b.Classes.Add(Cls.ToolBtn);
+				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("移除選中"));
+				b.OnClick(_ => vm.RemoveSelected());
+			});
+		return R;
 	}
 
 	// 清單：來源與選中項都綁到 Vm。
 	public partial Control MkList(Vm vm){
-		return new ListBox()
-			// 綁定的第二個參數是 Vm 實例、第三個是成員選擇器；這是編譯期綁定，AOT 安全。
-			.ItemsSource(vm, x=>x.Names)
-			.SelectedItem(vm, x=>x.SelectedName, BindingMode.TwoWay)
-			.Margin(new Thickness(12, 0))
-			// 項目模板的參數必須可空：虛擬化回收容器時，模板會被以 null 呼叫。
-			.ItemTemplate(new FuncDataTemplate<str>((Item, _) =>
-				Item is null ? null : new TextBlock().Text(Item)))
-			.With(l => {
-				_ListNames = l;
-			});
+		var R = new ListBox();
+		_ListNames = R;
+		R.Margin = new Thickness(12, 0);
+		// 綁定的第二個參數是 Vm 實例、第三個是成員選擇器；這是編譯期綁定，AOT 安全。
+		R.ItemsSource(vm, x=>x.Names);
+		R.SelectedItem(vm, x=>x.SelectedName, BindingMode.TwoWay);
+		// 項目模板的參數必須可空：虛擬化回收容器時，模板會被以 null 呼叫。
+		R.ItemTemplate(new FuncDataTemplate<str>((Item, _) =>
+			Item is null ? null : new TextBlock().Text(Item)));
+		return R;
 	}
 
 	// 輸入列：輸入框與加入按鈕。不需要指定 BindingMode 的綁定就不要寫。
 	public partial Control MkInputRow(Vm vm){
-		return new Grid()
-			.Cols("*,Auto")
-			.Margin(new Thickness(12, 10))
-			.Children(
-				new TextBox()
-					// 雙向綁定：輸入框寫回 Vm。
-					.Text(vm, x=>x.InputName, BindingMode.TwoWay)
-					.Grid_Column(0)
-					.With(t => {
-						_InputName = t;
-						// 直接屬性（direct property）沒有生成鏈式方法，只能在 With 裡賦值。
-						t.PlaceholderText = Todo.I18n("輸入名字後按 Enter 或「加入」");
-						t.OnKeyDown(e => {
-							if(e.Key == Key.Enter){
-								// 吃掉按鍵，免得輸入框自己再處理一次。
-								e.Handled = true;
-								vm.AddName();
-							}
-						});
-					}),
+		var R = new GridStack(IsRow: false);
+		R.SetColDefs([
+			new(1, GridUnitType.Star),
+			new(1, GridUnitType.Auto),
+		]);
 
-				new Button()
-					.Content(Todo.I18n("加入"))
-					.Grid_Column(1)
-					.Margin(new Thickness(8, 0, 0, 0))
-					.With(b => {
-						_BtnAdd = b;
-						b.Classes.Add(Cls.ToolBtn);
-						// 同步、非耗時的事件直接在這裡處理。
-						b.OnClick(_ => vm.AddName());
-					})
-			);
+		R.A(new TextBox(), t => {
+				_InputName = t;
+				// 雙向綁定：輸入框寫回 Vm。
+				t.Text(vm, x=>x.InputName, BindingMode.TwoWay);
+				// 直接屬性（direct property）沒有生成鏈式方法，直接賦值。
+				t.PlaceholderText = Todo.I18n("輸入名字後按 Enter 或「加入」");
+				t.OnKeyDown(e => {
+					if(e.Key == Key.Enter){
+						// 吃掉按鍵，免得輸入框自己再處理一次。
+						e.Handled = true;
+						vm.AddName();
+					}
+				});
+			})
+			.A(new Button(), b => {
+				_BtnAdd = b;
+				b.Classes.Add(Cls.ToolBtn);
+				b.Margin = new Thickness(8, 0, 0, 0);
+				b.SetContent(new TextBlock(), t => t.Text = Todo.I18n("加入"));
+				// 同步、非耗時的事件直接在這裡處理。
+				b.OnClick(_ => vm.AddName());
+			});
+
+		R.Grid.Margin = new Thickness(12, 10);
+		return R.Grid;
 	}
 
 	// ── 巢狀 Vm 的函數實現 ──

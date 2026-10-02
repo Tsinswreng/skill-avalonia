@@ -6,6 +6,7 @@ using Avalonia.Markup.Declarative;
 using MyProj;
 using MyProj.Infra;
 using MyProj.Services;
+using Tsinswreng.Avln.Grid;
 
 // 巢狀 Vm 在基底子句裡還不可見，故用別名引入，讓下面能直接寫 AppViewBase<Vm>。
 using Vm = ViewSample.Vm;
@@ -19,6 +20,14 @@ public partial class ViewSample : AppViewBase<Vm>{
 
 	[Doc("唯一的無參構造器。View 只能有無參構造器，Declarative 的視圖工廠與依賴注入都依賴它。")]
 	public partial ViewSample();
+
+	// 佈局容器，來自 Tsinswreng.Avln.Grid。
+	// 大多數場景用 GridStack 作視圖的根節點；它不是 Control 的子類，內部持有一個 Grid 屬性。
+	// 一個 GridStack 只能全為行或全為列，不要同時設置行和列。
+	// 每次 Add 時會自動設置行號或列號，因此不要手動設置行號列號。
+	// 優先使用 GridStack 或嵌套 GridStack，別用原生 Grid，除非你要手動設置行和列。
+	// IsRow: true 表示全為行的佈局。
+	public GridStack Root = new(IsRow: true);
 
 	// 關鍵控件都要獨立作為類的 public 成員，以方便設計規劃與測試。
 	// 關鍵控件包括：涉及輸入操作的（按鈕、輸入框）、信息展示的（文本框）、
@@ -96,6 +105,7 @@ Vm 由泛型基類傳入，型別已確定，故不必判空。
 巢狀寫法用於「View 與 Vm 一一對應」的常態：配對關係成為語法事實，
 外部引用寫 ViewSample.Vm，不必為兩邊各取一個名字。
 少數情況（一個 Vm 給多個 View 共用、或被非 UI 層使用）才拆成獨立的 VmXxx 型別。
+Vm 只曝露狀態與命令：不做視圖跳轉、不操作控件、不耦合 View 層細節。
 ")]
 	public partial class Vm : ViewModelBase, IMk<Vm>{
 

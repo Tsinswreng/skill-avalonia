@@ -8,18 +8,11 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 
 \-\-\-
 
-//自製段落
-#let P(C) = {C}
-//批註標記佔位
-#let Todo(Title, Body) = {}
-#let Wip(Title, Body) = {}
-
 
 #H[總則][
 	- UI 一律用 `Avalonia.Markup.Declarative` 以*純 C\# 聲明式*寫：
 		不建立 `.axaml`、不寫 XAML。
 	- 綁定一律用生成的強型別鏈式方法，禁止 `new Binding("字串路徑")` 這類寫法。
-	- 界面文本一律走 `Todo.I18n()`，禁止硬編碼。
 ]
 
 
@@ -41,6 +34,7 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 			ViewSample.Impl.cs   實現：View 的函數 ＋ 巢狀 Vm 的函數
 		````
 		- 不要另開 `ViewSample.Vm.Impl.cs`。
+		- 類型與所有函數都聲明成 `partial`：聲明檔只寫聲明，函數體寫在 `.Impl.cs`。
 		- 巢狀 Vm 的型別在 View 的基底子句裡還不可見，故用別名引入：
 			`using Vm = ViewSample.Vm;`，之後寫 `AppViewBase<Vm>`。
 	]
@@ -57,10 +51,10 @@ description: Avalonia 項目開發規範。UI 一律用 Avalonia.Markup.Declarat
 	#raw(read("MyProj/Views/Sample/ViewSample.Impl.cs"), lang: "cs")
 
 	注:
-	- 上面兩段是範例項目 `MyProj` 裡的那一屏，這裡直接讀這兩個檔案顯示，不是副本；
-		要求說明寫在它們的註釋裡。
 	- `AppViewBase<TVm>`、`ViewModelBase`、`IMk<T>`、`App.DiOrMk<T>()`、`Todo.I18n()`、
-		`[Doc]` 與全域別名（`str`、`obj`、`nil`、`NIL`、`CT`）由項目提供，
+		`GridStack`（`Tsinswreng.Avln.Grid`）、`.A()` 與 `SetContent()`、`SetChild()`
+		（`Tsinswreng.Avln.Dsl`）、`[Doc]` 與全域別名
+		（`str`、`obj`、`nil`、`NIL`、`CT`）由項目提供，
 		`Init`、`CheckInit`、`Fire`、`HandleErr` 定義在 `ViewModelBase` 上。
 		若項目未定義則應請示用戶。
 ]
