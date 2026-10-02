@@ -1,13 +1,10 @@
 namespace MyProj.Views.Sample;
 
 using Avalonia.Threading;
-using MyProj.Infra;
 using MyProj.Services;
 
-/// <summary>
 /// 巢狀 Vm 的函數實現。它與 View 在同一組檔案裡：
 /// 宣告在 <c>ViewSample.cs</c>，實現放這裡，View 自己的實現放 <c>ViewSample.Impl.cs</c>。
-/// </summary>
 public partial class ViewSample{
 
 	public partial class Vm{
@@ -44,16 +41,10 @@ public partial class ViewSample{
 			var name = SelectedName;
 			Names.Remove(name);
 			SelectedName = null;
-			StatusText = Todo.I18n("已移除：{0}（共 {1} 個）", name, Names.Count);
+			StatusText = Todo.I18n($"已移除：{name}（共 {Names.Count} 個）");
 		}
 
-		public partial async Task<nil> LoadAsync(CT Ct){
-			CheckInit();
-
-			// step 1: 耗時工作切到線程池，防止 UI 卡頓。
-			await Task.Delay(300, Ct);
-
-			// step 2: 改動被綁定的集合與屬性時，切回 UI 線程再改。
+		public partial async Task<nil> Load(CT Ct){
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				Names.Clear();
 				foreach(var one in SvcNames.DefaultNames){

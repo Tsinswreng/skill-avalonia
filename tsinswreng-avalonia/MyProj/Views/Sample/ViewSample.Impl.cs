@@ -47,10 +47,8 @@ public partial class ViewSample{
 			);
 	}
 
-	protected override partial void OnLoaded(){
-		// 耗時初始化放這裡：開視窗不該被資料載入卡住。
-		// 這裡沒有 Build 的參數可用，故用基類的 protected vm（同樣不可空）。
-		Fire(vm, vm.LoadAsync(CancellationToken.None));
+	protected override partial void OnAfterInitialized(){
+		Fire(vm, vm.Load(CancellationToken.None));
 	}
 
 	public partial Control MkToolbar(Vm vm){
@@ -64,7 +62,7 @@ public partial class ViewSample{
 						_BtnReload = b;
 						b.Classes.Add(Cls.ToolBtn);
 						// 非同步操作用 Fire 收斂例外；不要寫成 async void。
-						b.OnClick(_ => Fire(vm, vm.LoadAsync(CancellationToken.None)));
+						b.OnClick(_ => Fire(vm, vm.Load(CancellationToken.None)));
 					}),
 
 				new Button()
@@ -133,10 +131,8 @@ public partial class ViewSample{
 		try{
 			await Op;
 		}catch(Exception ex){
-			// fire-and-forget 的例外必須在此收斂，否則會變成未觀察的任務異常。
-			vm.StatusText = Todo.I18n("操作失敗：{0}", ex.Message);
+			vm.StatusText = Todo.I18n("操作失敗： "+ex.Message);
 		}
-
 		return NIL;
 	}
 }

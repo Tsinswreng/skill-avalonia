@@ -1,4 +1,4 @@
-namespace MyProj.Infra;
+namespace MyProj;
 
 /// <summary>
 /// 「可由專案自身直接建立」的型別約定。

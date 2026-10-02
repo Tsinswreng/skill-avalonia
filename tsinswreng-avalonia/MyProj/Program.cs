@@ -5,13 +5,12 @@
 // 本規範的視圖自己用 App.DiOrMk<T>() 解析 Vm，直接 new 即可。
 using MyProj;
 using MyProj.Di;
-using MyProj.Infra;
 using MyProj.Views.Sample;
 using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection();
 services.SetupSample();
-App.Services = services.BuildServiceProvider();
+App.SvcProvider = services.BuildServiceProvider();
 
 var lifetime = new ClassicDesktopStyleApplicationLifetime{
 	Args = args,
