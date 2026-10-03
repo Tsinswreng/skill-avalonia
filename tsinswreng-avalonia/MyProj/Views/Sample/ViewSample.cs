@@ -9,7 +9,7 @@ using MyProj.Services;
 using Tsinswreng.Avln.Dsl;
 using Tsinswreng.Avln.Grid;
 
-// 巢狀 Vm 在基底子句裡還不可見，故用別名引入，讓下面能直接寫 AppViewBase<Vm>。
+// 內部類 Vm 用別名引入，讓下面能直接寫 AppViewBase<Vm>。
 using Vm = ViewSample.Vm;
 
 [Doc(@"記得在這裏寫該寫的註釋")]
@@ -24,18 +24,21 @@ public partial class ViewSample : AppViewBase<Vm>{
 	public partial ViewSample();
 
 	// 佈局容器。大多數場景用 StackGrid 作視圖的根節點：它是 Grid 的子類，
+	// 來自Tsinswreng.Avln.Grid
 	// 子項一加進去就依順序自動落號，故不必自己算 Grid_Row、Grid_Column。
-	// 一個 StackGrid 只能全為行或全為列，不要同時設置行和列；要兩維就嵌套。
-	// 需要手動指定行號列號時，改用原生 Grid。
 	// IsRow: true 表示全為行的佈局。
+	// 一個 StackGrid 只能全為行或全為列，不要同時設置行和列；若需兩維則嵌套。
+	// 在大多數情況 你都應該用 StackGrid 代替Grid,
+	// 只有少數需要手動指定行號或列號的情況 纔改用原生 Grid。
 	public StackGrid Root = new(IsRow: true);
 
-	// 關鍵控件都要獨立作為類的 public 成員，以方便設計規劃與測試。
-	// 關鍵控件包括：涉及輸入操作的（按鈕、輸入框）、信息展示的（文本框）、
-	// 以及子模塊（其他的 ViewXxx）。
-	// 聲明為可空、不需要寫 get;set;。
-	// 控件在何處建立與賦值，見實現檔對應的 MkXxx 方法。
-
+	//頁面中的關鍵控件都要獨立作爲類的public成員、以方便設計規劃與測試。
+	//關鍵控件包括:
+	//涉及輸入操作交互(如按鈕,輸入框),信息展示的(如文本框);
+	//子模塊/子UserControl(其他的`ViewXxx`)。
+	//聲明關鍵控件時、可使用具體類型(如 `public TextBox? _CtrlCnt1`;)
+	//若暫時未確定類型也可以寫`Control?`或`object?`。
+	//聲明爲可空、不需要寫get;set;
 	[Doc("把輸入框的內容加入清單。")]
 	public Button? _BtnAdd;
 
@@ -53,7 +56,7 @@ public partial class ViewSample : AppViewBase<Vm>{
 
 	[Doc("狀態文字。綁定 Vm 的 StatusText。")]
 	public TextBlock? _StatusText;
-
+	
 	[Doc(@"建立控件樹。根控件由回傳值描述，父子關係用 Children(...)。
 Vm 由泛型基類傳入，型別已確定，故不必判空。
 #Prm[本視圖的 ViewModel]
