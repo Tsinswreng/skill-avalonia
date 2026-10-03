@@ -78,7 +78,9 @@ MyProj/Views/
 
 	注:
 	- `AppViewBase<TVm>`、`ViewModelBase`、`IMk<T>`、`App.DiOrMk<T>()`、`Todo.I18n()`、
-		`StackGrid`（`Tsinswreng.Avln.Grid`，本工作區的本地專案）、`[Doc]` 與全域別名
+		`StackGrid`（`Tsinswreng.Avln.Grid`，本工作區的本地專案）、
+		`IValConvtrWithErr` 與 `FnConvtr`（`Tsinswreng.Avln.Dsl`，只借轉值器）、
+		`[Doc]` 與全域別名
 		（`str`、`obj`、`nil`、`NIL`、`CT`）由項目提供，
 		`Init`、`CheckInit`、`Fire`、`HandleErr` 定義在 `ViewModelBase` 上。
 		若項目未定義則應請示用戶。

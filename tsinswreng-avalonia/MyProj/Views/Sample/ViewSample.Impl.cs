@@ -9,13 +9,22 @@ using Avalonia.Markup.Declarative;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using MyProj.Services;
+using Tsinswreng.Avln.Dsl;
 using Tsinswreng.Avln.Grid;
 
 // 本檔只放函數實現。聲明與 [Doc] 註釋位於 ViewSample.cs。
 // 一屏一組 Impl：View 與它的巢狀 Vm 的實現都在本檔，不另外開 ViewSample.Vm.Impl.cs。
 // 控件樹與版面都用 Declarative 的擴展方法：.Rows()、.Cols()、.Children()、.With()。
 // 佈局容器用 StackGrid（Tsinswreng.Avln.Grid），子項一加進去就自動落號，故不必自己算 Grid_Row、Grid_Column。
+// 轉值器借 Tsinswreng.Avln.Dsl 的 IValConvtrWithErr 與 FnConvtr；
+// 它的 .A()、SetContent()、Ctx.Bind() 那一套不屬於這套寫法，不要混用。
 public partial class ViewSample{
+
+	// 靜態構造器用來初始化轉值器這類靜態欄位。靜態構造器不能寫 partial。
+	static ViewSample(){
+		ConvInputToBtnEnabled = new FnConvtr<str, bool>(
+			Input => !string.IsNullOrWhiteSpace(Input));
+	}
 
 	// View 只能有無參構造器。這裡解析 Vm 並交給基類的 vm，也就是設置 DataContext；
 	// 庫的延遲初始化會在 DataContext 變成相容型別時立刻建立控件樹。
@@ -130,6 +139,8 @@ public partial class ViewSample{
 					}),
 
 				new Button()
+					// 轉值器把輸入框內容轉成可用狀態：空輸入時按鈕不可用。
+					.IsEnabled(vm, x=>x.InputName, converter: ConvInputToBtnEnabled)
 					.Content(Todo.I18n("加入"))
 					.Margin(new Thickness(8, 0, 0, 0))
 					.With(b => {

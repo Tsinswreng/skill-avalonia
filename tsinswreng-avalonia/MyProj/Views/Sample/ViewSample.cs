@@ -6,6 +6,7 @@ using Avalonia.Markup.Declarative;
 using MyProj;
 using MyProj.Infra;
 using MyProj.Services;
+using Tsinswreng.Avln.Dsl;
 using Tsinswreng.Avln.Grid;
 
 // 巢狀 Vm 在基底子句裡還不可見，故用別名引入，讓下面能直接寫 AppViewBase<Vm>。
@@ -13,6 +14,11 @@ using Vm = ViewSample.Vm;
 
 [Doc(@"記得在這裏寫該寫的註釋")]
 public partial class ViewSample : AppViewBase<Vm>{
+
+	// 轉換器也要在宣告檔聲明、但不實現；獨立出來方便測試。
+	// 初始化寫在實現檔的靜態構造器裡。
+	[Doc("把輸入框的內容轉成「加入」按鈕是否可用：空輸入時不可用。")]
+	public static IValConvtrWithErr ConvInputToBtnEnabled = default!;
 
 	[Doc("唯一的無參構造器。View 只能有無參構造器，Declarative 的視圖工廠與依賴注入都依賴它。")]
 	public partial ViewSample();
