@@ -1,17 +1,13 @@
 namespace MyProj.Views.Sample;
 
-using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Declarative;
-using MyProj;
 using MyProj.Infra;
-using MyProj.Services;
 using Tsinswreng.Avln.Dsl;
 using Tsinswreng.Avln.Grid;
 
 // 內部類 Vm 用別名引入，讓下面能直接寫 AppViewBase<Vm>。
-using Vm = ViewSample.Vm;
-
+using Vm = VmSample;
 [Doc(@"記得在這裏寫該寫的註釋")]
 public partial class ViewSample : AppViewBase<Vm>{
 
@@ -62,7 +58,7 @@ Vm 由泛型基類傳入，型別已確定，故不必判空。
 #Prm[本視圖的 ViewModel]
 #Rtn[控件樹的根控件]
 ")]
-	protected override partial object Build(Vm vm);
+	protected override partial object Build(VmSample vm);
 
 	[Doc(@"生命週期回調。控件樹與樣式都建好之後由庫觸發。
 耗時初始化放這裡，不能放構造器或 Build，否則會阻塞界面建立。
@@ -82,82 +78,24 @@ Vm 由泛型基類傳入，型別已確定，故不必判空。
 #Prm[本視圖的 ViewModel]
 #Rtn[工具列的控件]
 ")]
-	public partial Control MkToolbar(Vm vm);
+	public partial Control MkToolbar(VmSample vm);
 
 	[Doc(@"名字清單區塊。
 #Prm[本視圖的 ViewModel]
 #Rtn[清單的控件]
 ")]
-	public partial Control MkList(Vm vm);
+	public partial Control MkList(VmSample vm);
 
 	[Doc(@"輸入列區塊：輸入框與加入按鈕。
 #Prm[本視圖的 ViewModel]
 #Rtn[輸入列的控件]
 ")]
-	public partial Control MkInputRow(Vm vm);
+	public partial Control MkInputRow(VmSample vm);
 
 	[Doc("樣式類名常量。禁止用字串硬編碼類名。")]
 	public static partial class Cls{
 
 		[Doc("工具列按鈕的類名。")]
 		public const str ToolBtn = nameof(ToolBtn);
-	}
-
-	[Doc(@"本視圖的 ViewModel。
-巢狀寫法用於「View 與 Vm 一一對應」的常態：配對關係成為語法事實，
-外部引用寫 ViewSample.Vm，不必為兩邊各取一個名字。
-少數情況（一個 Vm 給多個 View 共用、或被非 UI 層使用）才拆成獨立的 VmXxx 型別。
-Vm 只曝露狀態與命令：不做視圖跳轉、不操作控件、不耦合 View 層細節。
-")]
-	[Doc(@$"記得在這裏寫該寫的註釋")]
-	public partial class Vm : AppVmBase, IMk<Vm>{
-
-		[Doc(@$"所有 Vm 都要有 protected 的無參構造器,
-		供{nameof(Mk)}用。")]
-		protected Vm(){}
-
-		[Doc(@"用于從外部直接創建對象、不注入依賴，單元測試也用它。
-不能定義多個 public 構造器，否則依賴注入無法確定該用哪一個。")]
-		public static partial Vm Mk();
-
-		[Doc("依賴聲明。不需要加任何修飾符、不需要 {get;set;}、都初始化為 default!。")]
-		ISvcUserCtx SvcUserCtx = default!;
-		SvcNames SvcNames = default!;
-		
-
-		[Doc(@"唯一的 public 構造器，供依賴注入")]
-		public partial Vm(
-			ISvcUserCtx SvcUserCtx
-			,SvcNames SvcNames
-		);
-
-		[Doc("用于綁定的屬性的getter和setter必須定義成這樣、無特殊情況(如轉發其他屬性)則必須使用field關鍵字。")]
-		public str InputName{
-			get;
-			set{ SetProperty(ref field, value); }
-		} = "";
-
-		[Doc($"記得在成員上寫該寫的註釋")]
-		public ObservableCollection<str> Names{
-			get;
-			set{ SetProperty(ref field, value); }
-		} = [];
-
-		public str? SelectedName{
-			get;
-			set{ SetProperty(ref field, value); }
-		}
-
-		public str StatusText{
-			get;
-			set{ SetProperty(ref field, value); }
-		} = Todo.I18n("就緒");
-
-		
-		[Doc($"記得在函數上寫該寫的註釋")]
-		public partial void AddName();
-		public partial void RemoveSelected();
-		public partial void Reload();
-		public partial Task<nil> Load(CT Ct);
 	}
 }

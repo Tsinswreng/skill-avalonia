@@ -44,24 +44,26 @@ MyProj/Views/
 
 ]
 
-#H[作爲內部類的Vm][
-	大多數時候View和Vm都是一一對應的。
-	在這時候就沒必要把Vm單獨抽出一個文件來了,
-	而是把Vm作爲內部類定義在View類的裏面,
-	類名直接叫`Vm`,
-	不會衝突。
-	合起來寫旹就只有一個`ViewXxx.cs`和一個`ViewXxx.Impl.cs`
-	
-	如果不是View和Vm一一對應的情況,
-	就ViewXxx和VmXxx分開寫。
-
-]
 
 
 #H[View 與 Vm 規範][
 	示例代碼：
 
-	`ViewSample.cs`（聲明）:
+	`VmSample.cs`（Vm 聲明）:
+	#raw(
+		read("MyProj/Views/Sample/VmSample.cs"),
+		block:true,
+		lang: "cs",
+	)
+
+	`VmSample.Impl.cs`（Vm 實現）:
+	#raw(
+		read("MyProj/Views/Sample/VmSample.Impl.cs"),
+		block:true,
+		lang: "cs",
+	)
+
+	`ViewSample.cs`（View 聲明）:
 	#raw(
 		read("MyProj/Views/Sample/ViewSample.cs"),
 		block:true,
@@ -69,13 +71,12 @@ MyProj/Views/
 		
 	)
 
-	`ViewSample.Impl.cs`（實現）:
+	`ViewSample.Impl.cs`（View 實現）:
 	#raw(
 		read("MyProj/Views/Sample/ViewSample.Impl.cs"),
 		block:true,
 		lang: "cs",
 	)
-
 	// 注:
 	// - `AppViewBase<TVm>`、`ViewModelBase`、`IMk<T>`、`App.DiOrMk<T>()`、`Todo.I18n()`、
 	// 	`Init`、`CheckInit`、`Fire`、`HandleErr` 定義在 `ViewModelBase` 上。
